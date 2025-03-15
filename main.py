@@ -7,13 +7,12 @@ from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-
+import uvicorn
 
 load_dotenv()
-# إنشاء تطبيق FastAPI
+
 app = FastAPI()
 
-# تحميل المتغيرات البيئية
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 LOGIN_EMAIL = os.getenv("LOGIN_EMAIL")
@@ -21,7 +20,6 @@ LOGIN_PASSWORD = os.getenv("LOGIN_PASSWORD")
 LOGIN_URL = "https://sawa9ly.app/login"
 PRODUCT_LINKS_FILE = "product_links.txt"
 
-# قائمة الروابط (يتم تحميلها عند بدء التشغيل)
 product_links = []
 
 def send_telegram_message(message):
@@ -37,15 +35,20 @@ def send_telegram_message(message):
 def login():
     try:
         service = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service)
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        
+        driver = webdriver.Chrome(service=service, options=chrome_options)
         driver.get(LOGIN_URL)
-
+        
         driver.find_element(By.NAME, "email").send_keys(LOGIN_EMAIL)
         driver.find_element(By.NAME, "password").send_keys(LOGIN_PASSWORD)
         driver.find_element(By.XPATH, "//button[@type='submit']").click()
-
+        
         driver.implicitly_wait(5)
-
+        
         if "dashboard" in driver.current_url:
             print("تم تسجيل الدخول بنجاح!")
             cookies = driver.get_cookies()
@@ -107,10 +110,7 @@ async def telegram_webhook(request: Request):
     elif message == "/check":
         cookies = login()
         if cookies:
-            unavailable_products = []
-            for link in product_links:
-                if not check_product_availability(link, cookies):
-                    unavailable_products.append(link)
+            unavailable_products = [link for link in product_links if not check_product_availability(link, cookies)]
             
             if unavailable_products:
                 send_telegram_message("🔴 المنتجات غير المتوفرة:")
@@ -133,3 +133,7 @@ async def telegram_webhook(request: Request):
 @app.get("/")
 def home():
     return {"message": "✅ Bot is running!"}
+
+PORT = int(os.getenv("PORT", 8000))
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=PORT)
