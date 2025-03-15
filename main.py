@@ -134,6 +134,6 @@ async def telegram_webhook(request: Request):
 def home():
     return {"message": "✅ Bot is running!"}
 
-PORT = int(os.getenv("PORT", 8000))
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=PORT)
+    port = int(os.getenv("PORT", 10000))  # استخدام المنفذ الذي تحدده Render
+    uvicorn.run(app, host="0.0.0.0", port=port)
