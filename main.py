@@ -4,6 +4,9 @@ from fastapi import FastAPI, Request
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
@@ -35,7 +38,7 @@ def send_telegram_message(message):
 def login():
     try:
         service = Service(ChromeDriverManager().install())
-        chrome_options = webdriver.ChromeOptions()
+        chrome_options = Options()
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
@@ -46,9 +49,10 @@ def login():
         driver.find_element(By.NAME, "email").send_keys(LOGIN_EMAIL)
         driver.find_element(By.NAME, "password").send_keys(LOGIN_PASSWORD)
         driver.find_element(By.XPATH, "//button[@type='submit']").click()
-        
-        driver.implicitly_wait(5)
-        
+
+        # استخدم WebDriverWait بدلاً من implicitly_wait
+        WebDriverWait(driver, 10).until(EC.url_contains("dashboard"))
+
         if "dashboard" in driver.current_url:
             print("تم تسجيل الدخول بنجاح!")
             cookies = driver.get_cookies()
@@ -103,8 +107,6 @@ async def telegram_webhook(request: Request):
     data = await request.json()
     message = data.get("message", {}).get("text", "").strip()
     
-    print(f"Received message: {message}")  # أضف طباعة هنا لمراقبة الرسائل الواردة
-    
     if message.startswith("http") and message not in product_links:
         product_links.append(message)
         send_telegram_message(f"✅ تمت إضافة الرابط: {message}")
@@ -130,8 +132,6 @@ async def telegram_webhook(request: Request):
         send_telegram_message("🗑️ تم مسح الروابط.")
     elif message == "/help":
         send_telegram_message("/check - فحص المنتجات\n/list - عرض الروابط\n/clear - مسح جميع الروابط")
-    else:
-        send_telegram_message(f"⚠️ أمر غير معروف: {message}")  # إضافة رد على الأوامر غير المعروفة
     return {"status": "ok"}
 
 @app.get("/")
