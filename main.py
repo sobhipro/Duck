@@ -6,7 +6,10 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 
+
+load_dotenv()
 # إنشاء تطبيق FastAPI
 app = FastAPI()
 
