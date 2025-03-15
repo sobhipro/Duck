@@ -23,7 +23,8 @@ LOGIN_EMAIL = os.getenv("LOGIN_EMAIL")
 LOGIN_PASSWORD = os.getenv("LOGIN_PASSWORD")
 LOGIN_URL = "https://sawa9ly.app/login"
 PRODUCT_LINKS_FILE = "product_links.txt"
-
+print("BOT_TOKEN:", BOT_TOKEN)
+print("CHAT_ID:", CHAT_ID)
 product_links = []
 
 def send_telegram_message(message):
