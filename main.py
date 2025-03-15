@@ -1,161 +1,152 @@
-import os
+from flask import Flask, request
+import threading
+import time
 import requests
-from fastapi import FastAPI, Request
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
-from dotenv import load_dotenv
-import uvicorn
 
-# تحميل المتغيرات من ملف .env
-load_dotenv()
+app = Flask(__name__)
 
-app = FastAPI()
+# بيانات البوت
+bot_token = '8063259306:AAEQ_EFy4zrUXjRa_oGB9T_UoNxaR6l-MW4'  # Token البوت
+chat_id = '5176782297'  # استبدل ب chat_id الخاص بك
 
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-LOGIN_EMAIL = os.getenv("LOGIN_EMAIL")
-LOGIN_PASSWORD = os.getenv("LOGIN_PASSWORD")
-LOGIN_URL = "https://sawa9ly.app/login"
-PRODUCT_LINKS_FILE = "product_links.txt"
-print("BOT_TOKEN:", BOT_TOKEN)
-print("CHAT_ID:", CHAT_ID)
+# بيانات تسجيل الدخول
+login_url = 'https://sawa9ly.app/login'
+email = 'sobhi.chebaiki.me@gmail.com'  # استبدل ببريدك الإلكتروني
+password = '000###sabrina###000'  # استبدل بكلمة المرور
+
+# قائمة لتخزين الروابط
 product_links = []
 
+# دالة لإرسال رسالة عبر Telegram
 def send_telegram_message(message):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    payload = {"chat_id": CHAT_ID, "text": message}
-    try:
-        response = requests.post(url, json=payload)
-        response.raise_for_status()
-        print("تم إرسال الرسالة بنجاح!")
-    except requests.exceptions.RequestException as e:
-        print(f"فشل إرسال الرسالة: {e}")
+    url = f'https://api.telegram.org/bot{bot_token}/sendMessage'
+    payload = {
+        'chat_id': chat_id,
+        'text': message
+    }
+    response = requests.post(url, json=payload)
+    if response.status_code == 200:
+        print('تم إرسال الرسالة بنجاح!')
+    else:
+        print('فشل إرسال الرسالة:', response.text)
 
-def login():
-    try:
-        # إعدادات المتصفح
-        service = Service(ChromeDriverManager().install())
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        
-        # فتح المتصفح
-        driver = webdriver.Chrome(service=service, options=chrome_options)
-        driver.get(LOGIN_URL)
-
-        # العثور على عناصر النموذج
-        email_field = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.NAME, "email"))
-        )
-        password_field = driver.find_element(By.NAME, "password")
-        remember_me_checkbox = driver.find_element(By.NAME, "remember")
-        login_button = driver.find_element(By.XPATH, "//button[@type='submit']")
-
-        # ملء البيانات في الحقول
-        email_field.send_keys(LOGIN_EMAIL)
-        password_field.send_keys(LOGIN_PASSWORD)
-
-        # اختيار تذكرني (اختياري)
-        remember_me_checkbox.click()
-
-        # الضغط على زر تسجيل الدخول
-        login_button.click()
-
-        # الانتظار حتى يتم تحميل الصفحة المطلوبة
-        WebDriverWait(driver, 10).until(EC.url_contains("dashboard"))
-
-        if "dashboard" in driver.current_url:
-            print("تم تسجيل الدخول بنجاح!")
-            cookies = driver.get_cookies()
-            driver.quit()
-            return cookies
-        else:
-            print("فشل تسجيل الدخول: تحقق من بيانات الاعتماد")
-            driver.quit()
-            return None
-    except Exception as e:
-        print(f"خطأ أثناء تسجيل الدخول: {e}")
-        return None
-
+# دالة لفحص حالة المنتج باستخدام cookies
 def check_product_availability(product_url, cookies):
     try:
         session = requests.Session()
         for cookie in cookies:
-            session.cookies.set(cookie["name"], cookie["value"])
-        
+            session.cookies.set(cookie['name'], cookie['value'])
         response = session.get(product_url)
-        response.raise_for_status()
-        
-        soup = BeautifulSoup(response.content, "html.parser")
-        availability_div = soup.find("div", class_="text-center text-xl grow bg-red-600 text-white p-3")
-        
-        if availability_div and "غير متوفر" in availability_div.text.strip():
-            return False
-        return True
-    except requests.exceptions.RequestException as e:
-        print(f"خطأ أثناء فحص المنتج: {e}")
-        return None
+        soup = BeautifulSoup(response.content, 'html.parser')
+        availability_div = soup.find('div', class_='text-center text-xl grow bg-red-600 text-white p-3')
+        if availability_div:
+            availability_text = availability_div.text.strip()
+            if 'غير متوفر' in availability_text:
+                return False, availability_text
+        return True, None
+    except Exception as e:
+        print('حدث خطأ أثناء فحص المنتج:', e)
+        return None, None
 
-def save_links():
-    with open(PRODUCT_LINKS_FILE, "w") as file:
-        file.write("\n".join(product_links))
-    print("تم حفظ الروابط.")
+# إعداد Webhook في Replit
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    data = request.get_json()
+    if 'message' in data:
+        text = data['message'].get('text')
+        if text and text.startswith('http'):
+            product_links.append(text)
+            send_telegram_message(f'تمت إضافة الرابط: {text}')
+    return "OK", 200
 
+# دالة لمراقبة الروابط
+def monitor_products(cookies):
+    print('بدء مراقبة المنتجات...')
+    threads = []
+    for link in product_links:
+        thread = threading.Thread(target=check_and_notify, args=(link, cookies))
+        threads.append(thread)
+        thread.start()
+    
+    for thread in threads:
+        thread.join()
+    print('تم الانتهاء من مراقبة المنتجات.')
+
+def check_and_notify(link, cookies):
+    is_available, status = check_product_availability(link, cookies)
+    if is_available is False:
+        message = f'تنبيه: المنتج غير متوفر.\nالرابط: {link}'
+        send_telegram_message(message)
+        product_links.remove(link)
+
+# دالة لتحميل الروابط من ملف نصي
 def load_links():
     try:
-        with open(PRODUCT_LINKS_FILE, "r") as file:
-            return file.read().splitlines()
+        with open('product_links.txt', 'r') as file:
+            links = file.read().splitlines()
+            return links
     except FileNotFoundError:
         return []
 
-@app.on_event("startup")
-def startup_event():
-    global product_links
-    product_links = load_links()
-
-@app.post("/webhook")
-async def telegram_webhook(request: Request):
-    data = await request.json()
-    message = data.get("message", {}).get("text", "").strip()
-    
-    if message.startswith("http") and message not in product_links:
-        product_links.append(message)
-        send_telegram_message(f"✅ تمت إضافة الرابط: {message}")
-        save_links()
-    elif message == "/check":
+# دالة لاستقبال الروابط من المستخدم
+def handle_updates():
+    while True:
+        time.sleep(10)
         cookies = login()
         if cookies:
-            unavailable_products = [link for link in product_links if not check_product_availability(link, cookies)]
-            
-            if unavailable_products:
-                send_telegram_message("🔴 المنتجات غير المتوفرة:")
-                for link in unavailable_products:
-                    send_telegram_message(link)
-            else:
-                send_telegram_message("✅ جميع المنتجات متاحة.")
-        else:
-            send_telegram_message("⚠️ فشل تسجيل الدخول.")
-    elif message == "/list":
-        send_telegram_message("\n".join(product_links) if product_links else "🚫 لا توجد روابط.")
-    elif message == "/clear":
-        product_links.clear()
-        save_links()
-        send_telegram_message("🗑️ تم مسح الروابط.")
-    elif message == "/help":
-        send_telegram_message("/check - فحص المنتجات\n/list - عرض الروابط\n/clear - مسح جميع الروابط")
-    return {"status": "ok"}
+            monitor_products(cookies)
 
-@app.get("/")
-def home():
-    return {"message": "✅ Bot is running!"}
+def login():
+    # إنشاء متصفح باستخدام Selenium
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
 
-PORT = int(os.getenv("PORT", 8000))
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=PORT)
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    driver.get(login_url)
+
+    # إدخال بيانات تسجيل الدخول
+    email_field = driver.find_element(By.ID, 'email')
+    email_field.send_keys(email)
+    password_field = driver.find_element(By.ID, 'password')
+    password_field.send_keys(password)
+
+    # النقر على زر تسجيل الدخول
+    login_button = driver.find_element(By.ID, 'login_button')
+    login_button.click()
+
+    # انتظار التحميل
+    time.sleep(5)
+
+    # استخراج الـ cookies بعد تسجيل الدخول
+    cookies = driver.get_cookies()
+    driver.quit()
+
+    return cookies
+
+# تفعيل الـ Webhook للبوت
+def set_webhook():
+    webhook_url = 'https://duck.replit.app/webhook'  # الرابط الخاص بك في Replit
+    url = f'https://api.telegram.org/bot{bot_token}/setWebhook?url={webhook_url}'
+    response = requests.get(url)
+    if response.status_code == 200:
+        print('تم تفعيل الـ Webhook بنجاح!')
+    else:
+        print('فشل تفعيل الـ Webhook:', response.text)
+
+if __name__ == '__main__':
+    # تحميل الروابط المحفوظة
+    product_links = load_links()
+    
+    # تفعيل الـ Webhook للبوت
+    set_webhook()
+
+    # بدء خادم Flask في Replit
+    threading.Thread(target=handle_updates).start()
+    app.run(host='0.0.0.0', port=80)
