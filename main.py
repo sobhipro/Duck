@@ -103,6 +103,8 @@ async def telegram_webhook(request: Request):
     data = await request.json()
     message = data.get("message", {}).get("text", "").strip()
     
+    print(f"Received message: {message}")  # أضف طباعة هنا لمراقبة الرسائل الواردة
+    
     if message.startswith("http") and message not in product_links:
         product_links.append(message)
         send_telegram_message(f"✅ تمت إضافة الرابط: {message}")
@@ -128,12 +130,14 @@ async def telegram_webhook(request: Request):
         send_telegram_message("🗑️ تم مسح الروابط.")
     elif message == "/help":
         send_telegram_message("/check - فحص المنتجات\n/list - عرض الروابط\n/clear - مسح جميع الروابط")
+    else:
+        send_telegram_message(f"⚠️ أمر غير معروف: {message}")  # إضافة رد على الأوامر غير المعروفة
     return {"status": "ok"}
 
 @app.get("/")
 def home():
     return {"message": "✅ Bot is running!"}
 
+PORT = int(os.getenv("PORT", 8000))
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 10000))  # استخدام المنفذ الذي تحدده Render
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=PORT)
