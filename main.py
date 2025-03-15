@@ -5,13 +5,14 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 import uvicorn
 
+# تحميل المتغيرات من ملف .env
 load_dotenv()
 
 app = FastAPI()
@@ -37,20 +38,36 @@ def send_telegram_message(message):
 
 def login():
     try:
+        # إعدادات المتصفح
         service = Service(ChromeDriverManager().install())
         chrome_options = Options()
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         
+        # فتح المتصفح
         driver = webdriver.Chrome(service=service, options=chrome_options)
         driver.get(LOGIN_URL)
-        
-        driver.find_element(By.NAME, "email").send_keys(LOGIN_EMAIL)
-        driver.find_element(By.NAME, "password").send_keys(LOGIN_PASSWORD)
-        driver.find_element(By.XPATH, "//button[@type='submit']").click()
 
-        # استخدم WebDriverWait بدلاً من implicitly_wait
+        # العثور على عناصر النموذج
+        email_field = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, "email"))
+        )
+        password_field = driver.find_element(By.NAME, "password")
+        remember_me_checkbox = driver.find_element(By.NAME, "remember")
+        login_button = driver.find_element(By.XPATH, "//button[@type='submit']")
+
+        # ملء البيانات في الحقول
+        email_field.send_keys(LOGIN_EMAIL)
+        password_field.send_keys(LOGIN_PASSWORD)
+
+        # اختيار تذكرني (اختياري)
+        remember_me_checkbox.click()
+
+        # الضغط على زر تسجيل الدخول
+        login_button.click()
+
+        # الانتظار حتى يتم تحميل الصفحة المطلوبة
         WebDriverWait(driver, 10).until(EC.url_contains("dashboard"))
 
         if "dashboard" in driver.current_url:
