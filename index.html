@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تنزيل تطبيق Hamsa</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    
+    <link href="https://fonts.googleapis.com/css?family=Tajawal&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #fff;
+            margin: 0;
+            padding: 0;
+            direction: rtl;
+            text-align: center;
+            
+            font-family: 'Tajawal', sans-serif;
+            
+            
+        }
+        
+        .container {
+            max-width: 960px;
+            margin: 20px auto;
+           
+            border-radius: 8px;
+            padding: 10px;
+         
+        }
+        
+        h1 {
+            font-size: 24px;
+            color: #5f6368;
+            margin-bottom: 20px;
+        }
+        
+        p {
+            font-size: 16px;
+            color: #202124;
+            margin-bottom: 20px;
+        }
+        
+   .carousel {
+   height: 427px;
+   width: 200px;
+   margin: 0 auto; /* توسيط العنصر أفقيًا */
+   margin-bottom: 20px;
+   padding: 0px;
+   border-radius: 18px;
+   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+       border: 3px solid black;
+   
+   }
+   
+ 
+   
+   .img carousel{
+   width: 100%;
+   height: 0 auto;
+   max-height: 500px;
+   border-radius: 18px;
+    }
+ .carousel-item {
+ background-color: #2D2F46;
+ }
+.carousel .indicators .indicator-item {
+    background-color: #000000 !important; /* لون نقاط التبديل */
+}
+.carousel .indicators .indicator-item.active {
+    background-color: #01AB17 !important; /* لون نقطة التبديل عند النشاط */
+}
+.carousel .indicators {
+    position: relative;
+    transform: translate(10%, 550%);
+}
+        
+        .app-icon {
+            width: 100px;
+            height: auto;
+            margin: 10px auto;
+            display: block;
+        }
+
+        .btn {
+            background-color: #2D2F46;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .btn:hover {
+            background-color: #000000;
+        }
+        
+        .feature-list {
+            text-align: center;
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 5px 0;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="https://github.com/sobhipro/Duck/raw/main/play_store_512.png" alt="أيقونة التطبيق" class="app-icon">
+        <h1><b>Duck Affiliate</b></h1>
+     
+        <h1>منصة تسويق بالعمولة بسهولة في الجزائر</h1>
+       <p>ابحث عن منتجات رائعة، شاركها مع أصدقائك، واكسب المال مع Duck Affiliate!</p>
+       
+     <b><h1 style="color: #5f6368"><b>الإصدار 18</b></h1>
+
+        <div class="carousel">
+        <a class="carousel-item" href="#a!"><img src="https://github.com/sobhipro/Duck/raw/main/01.png" alt="لقطة شاشة للتطبيق"></a>
+        <a class="carousel-item" href="#a!"><img src="https://github.com/sobhipro/Duck/raw/main/02.png" alt="لقطة شاشة للتطبيق"></a>
+        <a class="carousel-item" href="#a!"><img src="https://github.com/sobhipro/Duck/raw/main/03.png" alt="لقطة شاشة للتطبيق"></a>
+        <a class="carousel-item" href="#a!"><img src="https://github.com/sobhipro/Duck/raw/main/04.png" alt="لقطة شاشة للتطبيق"></a>
+    
+        </div>
+        
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+        var elems = document.querySelectorAll('.carousel');
+        var instances = M.Carousel.init(elems, {
+        fullWidth: true,
+        indicators: true
+        });
+        
+        // إضافة الأزرار للتحكم يدويًا
+        var prevButton = document.querySelector('.carousel .movePrevCarousel');
+        var nextButton = document.querySelector('.carousel .moveNextCarousel');
+        
+       
+        
+        prevButton.addEventListener('click', function() {
+        instances[0].prev();
+        });
+        
+        nextButton.addEventListener('click', function() {
+        instances[0].next();
+        });
+        });
+        </script>
+       
+        
+        <p style="color: #5f6368"><b>مميزات Duck Affiliate</b></p>
+       <ul class="feature-list">
+           <center> <li>عمولة حرة</li></center>
+           <center><li>تحديد هامش الربح بحرية</li></center>
+           <center> <li>اسحب أرباحك بسهولة.</li></center>
+            <center> <li>CCP - BridiMob - Flexy</li></center>
+        </ul>
+     <a href="https://github.com/sobhipro/Duck/raw/main/Duck-18.apk" class="btn" download style="display: flex; justify-content: center; align-items: center;">تحميل الآن</a>
+     
+        <p><b>فريق Duck Affiliate يتمنى لك نجاح مبهر</b></p>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+</body>
+</html>
